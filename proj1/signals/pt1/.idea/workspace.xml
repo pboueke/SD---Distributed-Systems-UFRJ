@@ -44,8 +44,8 @@
       <file leaf-file-name="main.cpp" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/main.cpp">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="126">
-              <caret line="8" column="1" selection-start-line="8" selection-start-column="1" selection-end-line="8" selection-end-column="1" />
+            <state relative-caret-position="234">
+              <caret line="14" column="13" selection-start-line="14" selection-start-column="13" selection-end-line="14" selection-end-column="13" />
               <folding />
             </state>
           </provider>
@@ -278,7 +278,7 @@
       <option name="USE_KEYWORD" value="false" />
       <method />
     </configuration>
-    <configuration default="false" name="signals1" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="1 1" WORKING_DIR="" PASS_PARENT_ENVS_2="true" PROJECT_NAME="signals1" TARGET_NAME="signals1" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="signals1" RUN_TARGET_NAME="signals1">
+    <configuration default="false" name="signals1" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="2 2" WORKING_DIR="" PASS_PARENT_ENVS_2="true" PROJECT_NAME="signals1" TARGET_NAME="signals1" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="signals1" RUN_TARGET_NAME="signals1">
       <envs />
       <method />
     </configuration>
@@ -332,7 +332,16 @@
     <option name="myLimit" value="2678400000" />
   </component>
   <component name="XDebuggerManager">
-    <breakpoint-manager />
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/main.cpp</url>
+          <line>8</line>
+          <option name="timeStamp" value="2" />
+        </line-breakpoint>
+      </breakpoints>
+      <option name="time" value="3" />
+    </breakpoint-manager>
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
@@ -346,8 +355,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/main.cpp">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="126">
-          <caret line="8" column="1" selection-start-line="8" selection-start-column="1" selection-end-line="8" selection-end-column="1" />
+        <state relative-caret-position="234">
+          <caret line="14" column="13" selection-start-line="14" selection-start-column="13" selection-end-line="14" selection-end-column="13" />
           <folding />
         </state>
       </provider>

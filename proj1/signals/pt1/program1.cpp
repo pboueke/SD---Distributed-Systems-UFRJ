@@ -4,11 +4,7 @@
 
 using namespace std;
 
-<<<<<<< HEAD:proj1/signals/pt1/main.cpp
 // process, signal
-=======
-// program pid signal
->>>>>>> 480f9663c7b8aa171c3640e221f8c2206be60426:proj1/signals/pt1/program1.cpp
 int main(int argc, char* argv[]) {
     try
     {

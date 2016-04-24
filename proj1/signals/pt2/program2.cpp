@@ -1,7 +1,3 @@
-//
-// Created by erikeft on 24/04/16.
-//
-
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,7 +21,7 @@ int main() {
     signal(SIGBUS, signal_callback_handler); // 7
 
     while(1) {
-        printf("Estou rodando.\n");
+        printf("Running...\n");
         sleep(1);
     }
     return EXIT_SUCCESS;

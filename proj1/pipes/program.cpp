@@ -1,5 +1,8 @@
 #include <iostream>
 #include <unistd.h>
+#include <sys/wait.h>
+#include <sstream>
+#include <vector>
 
 using namespace std;
 
@@ -19,10 +22,11 @@ void producer(int iterations, int file)
 {
     int sent, product = 0;
     FILE *pipe_wr_end = fdopen(file, "w");
-    for (int i = 0; i <= iterations; i++)
+    for (int i = 0; i < iterations; i++)
     {
         product += rand() % 100;
-        sent = fprintf(pipe_wr_end, "%d", product);
+        string pd = to_string(product) + " ";
+        sent = fprintf(pipe_wr_end, "%s", pd.c_str());
         printf("Product sent[%d]: %d\n", sent, product);
 
     }
@@ -33,35 +37,57 @@ void producer(int iterations, int file)
 // CONSUMER
 void consumer(int file)
 {
-    int ok, number;
+    int ok, retries;
+    char cnumber;
+    string current = "";
+
     FILE *pipe_rd_end = fdopen(file, "r");
+
     while(1) {
-        ok = fscanf(pipe_rd_end, "%i", &number);
+        ok = fscanf(pipe_rd_end, "%c", &cnumber);
+
         if(ok >= 1)
         {
-            printf("Consumer received[%d] %d", ok, number);
-            if (number == 0) {
-                printf(", terminating consumption.\n");
+            if (cnumber == '0')
+            {
+                printf("Terminating consumption");
                 break;
             }
-            if (IsPrime(number))
+            else if (cnumber == ' ')
             {
-                printf(", which is prime.\n");
+                if (IsPrime(stoi(current)))
+                {
+                    printf("Consumer got %s, which is prime.\n", current.c_str());
+                }
+                else
+                {
+                    printf("Consumer got %s, which isn't prime.\n", current.c_str());
+                }
+                current = "";
             }
             else
             {
-                printf(", which isn't prime.\n");
+                current.push_back(cnumber);
             }
         }
         else
         {
+            printf("Consumer waiting...\n");
+            sleep(100);
+            retries++;
+            if (retries == 100)
+            {
+                printf("Consumer leaving!\n");
+                break;
+            }
             //EOF or error
-            printf("Consumer done[%d].\n", ok);
-            break;
+            //printf("Consumer done[%d].\n", ok);
+            //break;
         }
     }
     fclose(pipe_rd_end);
 }
+
 int main(int argc, char* argv[])
 {
     pid_t pid;
@@ -83,6 +109,8 @@ int main(int argc, char* argv[])
     else{ //parent
         close(pd[0]);
         producer(atoi(argv[1]), pd[1]);
+        waitpid(pid, NULL, 0);
+        //sleep(1000);
         return EXIT_SUCCESS;
     }
 

@@ -1,24 +1,24 @@
-//
-// Created by erikeft on 25/04/16.
-//
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <errno.h>
 #include <string.h>
 #include <netdb.h>
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <sys/socket.h>
-
 #include <arpa/inet.h>
-#include <asm/ioctls.h>
-#include <sys/ioctl.h>
+#include <iostream>
 
 #define PORT "3490" // the port client will be connecting to
-
 #define MAXDATASIZE 100 // max number of bytes we can get at once
+
+bool isPrime( int number ) //LostInTheCode, SO
+{
+    // tests the number in the formats 6k-1, 6k and 6k+1 up until it's square root
+    if ( ( (!(number & 1)) && number != 2 ) || (number < 2) || (number % 3 == 0 && number != 3) )
+        return (false);
+    for( int k = 1; 36*k*k-12*k < number;++k)
+        if ( (number % (6*k+1) == 0) || (number % (6*k-1) == 0) )
+            return (false);
+    return true;
+}
 
 // get sockaddr, IPv4 or IPv6:
 void *get_in_addr(struct sockaddr *sa)
@@ -81,19 +81,51 @@ int main(int argc, char *argv[])
     freeaddrinfo(servinfo); // all done with this structure
 
 
-    if (send(sockfd, "10", 2, 0) == -1){
-        perror("send");
+    if (send(sockfd, "Hello There!", 12, 0) == -1){
+        perror("client: error send");
     }
 
     while(1) {
             if ((numbytes = recv(sockfd, buf, MAXDATASIZE - 1, 0)) == -1) {
-                perror("recv");
+                perror("client: error recv");
             }
 
         buf[numbytes] = '\0';
 
         if(numbytes != 0){
-            printf("client: received '%s'\n",buf);
+            printf("client: received '%s', ",buf);
+        }
+
+        int prod = atoi(buf);
+
+        if (prod == 0)
+        {
+            printf("\nTerminating consumption.");
+            break;
+        }
+        else if (isPrime(atoi(buf)))
+        {
+            printf("which is prime.\n");
+            const char* prodString = std::to_string(prod).c_str();
+            char * sendmsg = new char[strlen(prodString)+11];
+            strcpy(sendmsg,prodString);
+            strcat(sendmsg," is prime.");
+            if (send(sockfd, sendmsg, strlen(sendmsg), 0) == -1){
+                perror("client: error send");
+            }
+            delete sendmsg;
+        }
+        else
+        {
+            printf("which isn't prime.\n");
+            const char* prodString = std::to_string(prod).c_str();
+            char * sendmsg = new char[strlen(prodString)+13];
+            strcpy(sendmsg,prodString);
+            strcat(sendmsg," isn't prime.");
+            if (send(sockfd, sendmsg, strlen(sendmsg), 0) == -1){
+                perror("client: error send");
+            }
+            delete sendmsg;
         }
     }
     close(sockfd);

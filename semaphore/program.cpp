@@ -13,7 +13,7 @@
 #include <chrono>
 using namespace std;
 
-// print function for "thread safe" printing using a stringstream
+// //print function for "thread safe" //printing using a stringstream
 void print(ostream& s) { cout << s.rdbuf(); cout.flush(); s.clear(); }
 
 //
@@ -21,9 +21,11 @@ void print(ostream& s) { cout << s.rdbuf(); cout.flush(); s.clear(); }
 //
 //
 const int producer_delay_to_produce = 10;   // in miliseconds
-const int consumer_delay_to_consume = 10;
+const int consumer_delay_to_consume = 1;
 const int max_production = 10000;              // When producers has produced this quantity they will stop to produce
 int max_products;                // Maximum number of products that can be stored
+int produced = 0;
+int consumed = 0;
 
 //      Variables
 //
@@ -67,26 +69,33 @@ void produce(int producer_id)
     int product;
     product = (rand() % (10000000+1-1))+1;
 
-    is_not_full.wait(lock, [] { return products.size() != max_products; });
-    products.push(product);
+    if (is_not_full.wait_for(lock, chrono::milliseconds(200), [] { return products.size() != max_products; }))
+    {
+        products.push(product);
+        ++produced;
+        //print(stringstream() << "Produced " << produced << "\n");
 
-    //print(stringstream() << "Producer " << producer_id << " produced " << product << "\n");
-    is_not_empty.notify_all();
+        //print(stringstream() << "Producer " << producer_id << " produced " << product << "\n");
+        is_not_empty.notify_all();
+    }
 }
 
 //      Consume function, consumer_id will consume a product
-void consume(int consumer_id)
-{
+void consume(int consumer_id) {
     unique_lock<mutex> lock(xmutex);
     int product;
 
-    is_not_empty.wait(lock, [] { return products.size() > 0; });
 
+    if (is_not_empty.wait_for(lock, chrono::milliseconds(200),
+                              [] { return products.size() > 0; })) {
     product = products.top();
     products.pop();
+    ++consumed;
+    //print(stringstream() << "Consumed " << consumed << "\n");
 
     //print(stringstream() << "Consumer: " << consumer_id << " - " << product << " is prime? " << boolToString(isPrime(product)) << "\n");
     is_not_full.notify_all();
+    }
 
 }
 
@@ -94,24 +103,26 @@ void consume(int consumer_id)
 void producer(int id)
 {
     ++num_producers_working;
-    for(int i = 0; i < max_production; ++i)
+    while(produced < max_production)
     {
-        srand(((int) time(NULL)) * i);
+        srand(((int) time(NULL)) * produced);
         produce(id);
         //this_thread::sleep_for(chrono::milliseconds(producer_delay_to_produce));
     }
-
-   //print(stringstream() << "Producer " << id << " has exited\n");
     --num_producers_working;
+    //print(stringstream() << "Producer " << id << " has exited\n");
 }
 
 //      Consumer function, this is the body of a consumer thread
 void consumer(int id)
 {
     // Wait until there is any producer working
-    while(num_producers_working == 0) this_thread::yield();
+    while(num_producers_working == 0){
+        //print(stringstream() << "Consumer " << id << " has yielded\n");
+        this_thread::yield();
+    }
 
-    while(num_producers_working != 0 || products.size() > 0)
+    while(consumed < max_production)
     {
         consume(id);
         //this_thread::sleep_for(chrono::milliseconds(consumer_delay_to_consume));
@@ -122,10 +133,13 @@ void consumer(int id)
 
 //
 //      Main
-//ls
+//
 
 int main(int argc, char* argv[])
 {
+    std::chrono::time_point<std::chrono::system_clock> start, end;
+    start = std::chrono::system_clock::now();
+
     num_producers = atoi(argv[1]);
     num_consumers = atoi(argv[2]);
     max_products = atoi(argv[3]);
@@ -133,18 +147,24 @@ int main(int argc, char* argv[])
     vector<thread> producers_and_consumers;
 
     // Create producers
-    for(int i = 0; i < num_producers; ++i)
+    for(int i = 0; i < num_producers; ++i) {
         producers_and_consumers.push_back(thread(producer, i));
+    }
 
     // Create consumers
-    for(int i = 0; i < num_consumers; ++i)
+    for(int i = 0; i < num_consumers; ++i) {
         producers_and_consumers.push_back(thread(consumer, i));
+    }
 
     // Wait for consumers and producers to finish
-    for(auto& t : producers_and_consumers)
+    for(auto& t : producers_and_consumers) {
         t.join();
+    }
 
-    print(stringstream() << "Cabo\n");
-    return 0;
+    end = std::chrono::system_clock::now();
 
+    long elapsed_seconds = std::chrono::duration_cast<std::chrono::milliseconds>
+            (end-start).count();
+
+    print(stringstream() << elapsed_seconds << "\n");
 }

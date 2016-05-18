@@ -19,38 +19,55 @@ void print(ostream& s) { cout << s.rdbuf(); cout.flush(); s.clear(); }
 //
 //      Constants
 //
-const int num_producers = 5;
-const int num_consumers = 10;
+//
 const int producer_delay_to_produce = 10;   // in miliseconds
-const int consumer_delay_to_consume = 30;   // in miliseconds
-
-const int consumer_max_wait_time = 200;     // in miliseconds - max time that a consumer can wait for a product to be produced.
-
-const int max_production = 10;              // When producers has produced this quantity they will stop to produce
+const int consumer_delay_to_consume = 10;
+const int max_production = 100;              // When producers has produced this quantity they will stop to produce
 const int max_products = 10;                // Maximum number of products that can be stored
 
-//
 //      Variables
 //
+//
+int num_producers;
+int num_consumers;
+
+
+
 atomic<int> num_producers_working(0);       // When there's no producer working the consumers will stop, and the program will stop.
 stack<int> products;                        // The products stack, here we will store our products
-mutex xmutex;                               // Our mutex, without this mutex our program will cry
 
+mutex xmutex;                               // Our mutex, without this mutex our program will cry
 condition_variable is_not_full;             // to indicate that our stack is not full between the thread operations
+
 condition_variable is_not_empty;            // to indicate that our stack is not empty between the thread operations
 
-//
 //      Functions
 //
+inline const char * const boolToString(bool b)
+{
+    return b ? "true" : "false";
+}
+
+bool isPrime(int number ) //LostInTheCode, SO
+{
+    // tests the number in the formats 6k-1, 6k and 6k+1 up until it's square root
+    if ( ( (!(number & 1)) && number != 2 ) || (number < 2) || (number % 3 == 0 && number != 3) )
+        return (false);
+    for( int k = 1; 36*k*k-12*k < number;++k)
+        if ( (number % (6*k+1) == 0) || (number % (6*k-1) == 0) )
+            return (false);
+    return true;
+}
 
 //      Produce function, producer_id will produce a product
 void produce(int producer_id)
 {
     unique_lock<mutex> lock(xmutex);
+    srand(((int) time(NULL)) + producer_id);
     int product;
+    product = (rand() % (10000000+1-1))+1;
 
     is_not_full.wait(lock, [] { return products.size() != max_products; });
-    product = products.size();
     products.push(product);
 
     print(stringstream() << "Producer " << producer_id << " produced " << product << "\n");
@@ -63,15 +80,14 @@ void consume(int consumer_id)
     unique_lock<mutex> lock(xmutex);
     int product;
 
-    if(is_not_empty.wait_for(lock, chrono::milliseconds(consumer_max_wait_time),
-                             [] { return products.size() > 0; }))
-    {
-        product = products.top();
-        products.pop();
+    is_not_empty.wait(lock, [] { return products.size() > 0; });
 
-        print(stringstream() << "Consumer " << consumer_id << " consumed " << product << "\n");
-        is_not_full.notify_all();
-    }
+    product = products.top();
+    products.pop();
+
+    print(stringstream() << "Consumer: " << consumer_id << " - " << product << " is prime? " << boolToString(isPrime(product)) << "\n");
+    is_not_full.notify_all();
+
 }
 
 //      Producer function, this is the body of a producer thread
@@ -106,8 +122,11 @@ void consumer(int id)
 //
 //      Main
 //
-int main()
+int main(int argc, char* argv[])
 {
+    num_producers = 10; //atoi(argv[1]);
+    num_consumers = 10; //atoi(argv[2]);
+
     vector<thread> producers_and_consumers;
 
     // Create producers

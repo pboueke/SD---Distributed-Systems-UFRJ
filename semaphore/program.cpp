@@ -22,8 +22,8 @@ void print(ostream& s) { cout << s.rdbuf(); cout.flush(); s.clear(); }
 //
 const int producer_delay_to_produce = 10;   // in miliseconds
 const int consumer_delay_to_consume = 10;
-const int max_production = 100;              // When producers has produced this quantity they will stop to produce
-const int max_products = 10;                // Maximum number of products that can be stored
+const int max_production = 10000;              // When producers has produced this quantity they will stop to produce
+int max_products;                // Maximum number of products that can be stored
 
 //      Variables
 //
@@ -63,14 +63,14 @@ bool isPrime(int number ) //LostInTheCode, SO
 void produce(int producer_id)
 {
     unique_lock<mutex> lock(xmutex);
-    srand(((int) time(NULL)) + producer_id);
+
     int product;
     product = (rand() % (10000000+1-1))+1;
 
     is_not_full.wait(lock, [] { return products.size() != max_products; });
     products.push(product);
 
-    print(stringstream() << "Producer " << producer_id << " produced " << product << "\n");
+    //print(stringstream() << "Producer " << producer_id << " produced " << product << "\n");
     is_not_empty.notify_all();
 }
 
@@ -85,7 +85,7 @@ void consume(int consumer_id)
     product = products.top();
     products.pop();
 
-    print(stringstream() << "Consumer: " << consumer_id << " - " << product << " is prime? " << boolToString(isPrime(product)) << "\n");
+    //print(stringstream() << "Consumer: " << consumer_id << " - " << product << " is prime? " << boolToString(isPrime(product)) << "\n");
     is_not_full.notify_all();
 
 }
@@ -96,11 +96,12 @@ void producer(int id)
     ++num_producers_working;
     for(int i = 0; i < max_production; ++i)
     {
+        srand(((int) time(NULL)) * i);
         produce(id);
-        this_thread::sleep_for(chrono::milliseconds(producer_delay_to_produce));
+        //this_thread::sleep_for(chrono::milliseconds(producer_delay_to_produce));
     }
 
-    print(stringstream() << "Producer " << id << " has exited\n");
+   //print(stringstream() << "Producer " << id << " has exited\n");
     --num_producers_working;
 }
 
@@ -113,19 +114,21 @@ void consumer(int id)
     while(num_producers_working != 0 || products.size() > 0)
     {
         consume(id);
-        this_thread::sleep_for(chrono::milliseconds(consumer_delay_to_consume));
+        //this_thread::sleep_for(chrono::milliseconds(consumer_delay_to_consume));
     }
 
-    print(stringstream() << "Consumer " << id << " has exited\n");
+    //print(stringstream() << "Consumer " << id << " has exited\n");
 }
 
 //
 //      Main
-//
+//ls
+
 int main(int argc, char* argv[])
 {
-    num_producers = 10; //atoi(argv[1]);
-    num_consumers = 10; //atoi(argv[2]);
+    num_producers = atoi(argv[1]);
+    num_consumers = atoi(argv[2]);
+    max_products = atoi(argv[3]);
 
     vector<thread> producers_and_consumers;
 
@@ -140,4 +143,8 @@ int main(int argc, char* argv[])
     // Wait for consumers and producers to finish
     for(auto& t : producers_and_consumers)
         t.join();
+
+    print(stringstream() << "Cabo\n");
+    return 0;
+
 }

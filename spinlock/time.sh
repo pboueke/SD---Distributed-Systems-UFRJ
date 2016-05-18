@@ -9,7 +9,7 @@ do
     do
         for i in {1..10};
         do
-            (time (sudo nice --10 ./a.out $size $thread) ; ) 2>> ${size}_${thread}.dat;
+            (sudo nice --10 ./a.out $size $thread ; ) >> ${size}_${thread}.dat;
         done
     done
 done

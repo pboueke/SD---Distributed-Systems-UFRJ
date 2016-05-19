@@ -1,7 +1,3 @@
-/**
-        C++ Producer Consumer using C++11 thread facilities
-        To compile: g++ -std=c++11 <program name> -pthread -lpthread -o pc
-*/
 #include <iostream>
 #include <sstream>
 #include <vector>
@@ -13,35 +9,24 @@
 #include <chrono>
 using namespace std;
 
-// //print function for "thread safe" //printing using a stringstream
+// print function for "thread safe" printing using a stringstream
 void print(ostream& s) { cout << s.rdbuf(); cout.flush(); s.clear(); }
 
-//
-//      Constants
-//
-//
-const int producer_delay_to_produce = 10;   // in miliseconds
-const int consumer_delay_to_consume = 1;
 const int max_production = 10000;              // When producers has produced this quantity they will stop to produce
 int max_products;                // Maximum number of products that can be stored
 int produced = 0;
 int consumed = 0;
 
-//      Variables
-//
-//
 int num_producers;
 int num_consumers;
 
+atomic<int> num_producers_working(0);      
+stack<int> products;                       
 
+mutex xmutex;                            
+condition_variable is_not_full;             
 
-atomic<int> num_producers_working(0);       // When there's no producer working the consumers will stop, and the program will stop.
-stack<int> products;                        // The products stack, here we will store our products
-
-mutex xmutex;                               // Our mutex, without this mutex our program will cry
-condition_variable is_not_full;             // to indicate that our stack is not full between the thread operations
-
-condition_variable is_not_empty;            // to indicate that our stack is not empty between the thread operations
+condition_variable is_not_empty;            
 
 //      Functions
 //
@@ -99,7 +84,7 @@ void consume(int consumer_id) {
 
 }
 
-//      Producer function, this is the body of a producer thread
+//      Producer function, body of a producer thread
 void producer(int id)
 {
     ++num_producers_working;
@@ -113,7 +98,7 @@ void producer(int id)
     //print(stringstream() << "Producer " << id << " has exited\n");
 }
 
-//      Consumer function, this is the body of a consumer thread
+//      Consumer function, body of a consumer thread
 void consumer(int id)
 {
     // Wait until there is any producer working
@@ -130,10 +115,6 @@ void consumer(int id)
 
     //print(stringstream() << "Consumer " << id << " has exited\n");
 }
-
-//
-//      Main
-//
 
 int main(int argc, char* argv[])
 {
@@ -156,7 +137,7 @@ int main(int argc, char* argv[])
         producers_and_consumers.push_back(thread(consumer, i));
     }
 
-    // Wait for consumers and producers to finish
+    // Join consumers and producers
     for(auto& t : producers_and_consumers) {
         t.join();
     }

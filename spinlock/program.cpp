@@ -101,7 +101,7 @@ int main(int argc, char const *argv[]) {
 
         if (current == chunks - 1)
         {
-            n = an%MEMORY_SIZE;
+            n = an - (chunks - 1) * MEMORY_SIZE;
         }
 
         for (long i = 0; i < n; ++i) {

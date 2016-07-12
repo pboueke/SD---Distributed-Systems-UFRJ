@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+option java_multiple_files = true;
+option java_package = "trabalho3.operador";
+option java_outer_classname = "OperadorProto";
+
+service Operador {
+ 
+  rpc rpcLog (Numbers) returns (Result) {}
+
+
+  rpc rpcSqrt (Numbers) returns (Result) {}
+
+
+  rpc rpcPower (NumbersPower) returns (Result) {}
+}
+
+
+message Numbers {
+  bytes array = 1;
+  int32 size = 2;
+}
+
+message NumbersPower {
+  bytes array = 1;
+  int32 size = 2;
+  int32 power = 3;
+}
+
+message Result {
+  bytes array = 1;
+}

@@ -6,9 +6,9 @@ import (
 	"net/http"
 	_ "net/http/pprof"
 	"math"
-	"sync"
 	"runtime"
-	"encoding/json"
+	"encoding/binary"
+	"bytes"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	pb "trabalho3/proto"
@@ -22,66 +22,86 @@ type OperadorServer struct{}
 
 func (s *OperadorServer) RpcLog(ctx context.Context, in *pb.Numbers) (*pb.Result, error) {
 	defer clean()
-	array := make([]float32, 0, in.Size)
-	_ = json.Unmarshal(in.Array, &array)
+
+	array := make([]float32, in.Size, in.Size)
+
+	buffer := bytes.NewBuffer(in.Array)
+	err := binary.Read(buffer, binary.LittleEndian, &array)
+
+	if err != nil {
+		log.Fatalf("could not solve: %v", err)
+	}
 
 	for i, elem := range array {
 		array[i] = float32(math.Log(float64(elem)))
 	}
 
-	stringJson, _ := json.Marshal(array)
-	array = nil
+	buffer.Reset()
+	err = binary.Write(buffer, binary.LittleEndian, array)
+
+	if err != nil {
+		log.Fatalf("could not solve: %v", err)
+	}
 	
-	return &pb.Result{Array: stringJson}, nil
+	return &pb.Result{Array: buffer.Bytes()}, nil
 }
 
 func (s *OperadorServer) RpcSqrt(ctx context.Context, in *pb.Numbers) (*pb.Result, error) {
 	defer clean()
-	array := make([]float32, 0, in.Size)
-	_ = json.Unmarshal(in.Array, &array)
 
-	var wg sync.WaitGroup
+	array := make([]float32, in.Size, in.Size)
 
-	wg.Add(1)
-	go func(){
-		defer wg.Done()
-		for i, elem := range array {
-			array[i] = float32(math.Sqrt(float64(elem)))
-		}
-	}()
+	buffer := bytes.NewBuffer(in.Array)
+	err := binary.Read(buffer, binary.LittleEndian, &array)
 
-	wg.Wait()
-	stringJson, _ := json.Marshal(array)
-	array = nil
-	return &pb.Result{Array: stringJson}, nil
+	if err != nil {
+		log.Fatalf("could not solve: %v", err)
+	}
+
+	for i, elem := range array {
+		array[i] = float32(math.Sqrt(float64(elem)))
+	}
+
+	buffer.Reset()
+	err = binary.Write(buffer, binary.LittleEndian, array)
+
+	if err != nil {
+		log.Fatalf("could not solve: %v", err)
+	}
+	
+	return &pb.Result{Array: buffer.Bytes()}, nil
 }
 
 func (s *OperadorServer) RpcPower(ctx context.Context, in *pb.NumbersPower) (*pb.Result, error) {
 	defer clean()
-	array := make([]float32, 0, in.Size)
-	_ = json.Unmarshal(in.Array, &array)
 
-	var wg sync.WaitGroup
+	array := make([]float32, in.Size, in.Size)
 
-	wg.Add(1)
-	go func(){
-		defer wg.Done()
-		for i, elem := range array {
-			array[i] = float32(math.Pow(float64(elem), float64(in.Power)))
-		}
-	}()
+	buffer := bytes.NewBuffer(in.Array)
+	err := binary.Read(buffer, binary.LittleEndian, &array)
 
-	wg.Wait()
+	if err != nil {
+		log.Fatalf("could not solve: %v", err)
+	}
 
-	stringJson, _ := json.Marshal(array)
-	array = nil
-	return &pb.Result{Array: stringJson}, nil
+	for i, elem := range array {
+		array[i] = float32(math.Pow(float64(elem), float64(in.Power)))
+	}
+
+	buffer.Reset()
+	err = binary.Write(buffer, binary.LittleEndian, array)
+
+	if err != nil {
+		log.Fatalf("could not solve: %v", err)
+	}
+	
+	return &pb.Result{Array: buffer.Bytes()}, nil
 }
 
 func main() {
 	// Start: Para perfilamento
 	go func() {
-    	log.Println(http.ListenAndServe("localhost:6061", nil))
+    	log.Println(http.ListenAndServe("localhost:6060", nil))
     }()	
     // End: perfilamento
     

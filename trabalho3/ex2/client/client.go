@@ -8,8 +8,9 @@ import (
 	"sync"
 	"net/http"
 	_ "net/http/pprof"
-	"encoding/json"
-	//rand "math/rand"
+	"encoding/binary"
+	"bytes"
+	"math/rand"
 	math "math"
 	"strconv"
 	"golang.org/x/net/context"
@@ -27,11 +28,13 @@ var operation string = ""
 var power int64 = 0
 
 func main() {
+	// Start: Para perfilamento
 	go func() {
     	log.Println(http.ListenAndServe("localhost:6061", nil))
     }()	
+    // End: perfilamento
 
-	n := 50000000
+	n := 100000000
 	values := make([]float32, 0, n)
 	fillArray(&values, n)
 
@@ -98,6 +101,7 @@ func main() {
     wg.Wait()
 
     elapsed := time.Since(start)
+    //fmt.Println(values)
     fmt.Printf("demorou %s\n",elapsed)
     fmt.Printf("done - threads: %v, operation: %v\n", threads, operation)
 	
@@ -105,41 +109,59 @@ func main() {
 
 func fillArray(array *[]float32, n int) {
 	for i:=0; i < n; i++{
-		*array = append(*array, float32(10+i))//float32(rand.Int31()))
+		*array = append(*array, float32(rand.Int31()))
 	}
 }
 
 func doLog(slice []float32){
-	stringJson, err := json.Marshal(slice)
-	r, err := c.RpcLog(context.Background(), &pb.Numbers{Array: stringJson, Size: int32(len(slice))})
+	buffer := new(bytes.Buffer)
+	err := binary.Write(buffer, binary.LittleEndian, slice)
+
+	r, err := c.RpcLog(context.Background(), &pb.Numbers{Array: buffer.Bytes(), Size: int32(len(slice))})
 	if err != nil {
 		log.Fatalf("could not solve: %v", err)
 	}
-	err = json.Unmarshal(r.Array, &slice)	
+	//err = enc.Unmarshal(r.Array, &slice)	
+	buffer.Reset()
+	buffer.Write(r.Array)
+
+	err = binary.Read(buffer, binary.LittleEndian, &slice)
 	if err != nil {
 		log.Fatalf("could not solve: %v", err)
 	}
 }
 
 func doSqrt(slice []float32){
-	stringJson, err := json.Marshal(slice)
-	r, err := c.RpcSqrt(context.Background(), &pb.Numbers{Array: stringJson, Size: int32(len(slice))})
+	buffer := new(bytes.Buffer)
+	err := binary.Write(buffer, binary.LittleEndian, slice)
+
+	r, err := c.RpcSqrt(context.Background(), &pb.Numbers{Array: buffer.Bytes(), Size: int32(len(slice))})
 	if err != nil {
 		log.Fatalf("could not solve: %v", err)
 	}
-	err = json.Unmarshal(r.Array, &slice)	
+
+	buffer.Reset()
+	buffer.Write(r.Array)
+
+	err = binary.Read(buffer, binary.LittleEndian, &slice)
 	if err != nil {
 		log.Fatalf("could not solve: %v", err)
 	}
 }
 
 func doPow(slice []float32, power int32){
-	stringJson, err := json.Marshal(slice)
-	r, err := c.RpcPower(context.Background(), &pb.NumbersPower{Array: stringJson, Size: int32(len(slice)), Power: power})
+	buffer := new(bytes.Buffer)
+	err := binary.Write(buffer, binary.LittleEndian, slice)
+
+	r, err := c.RpcPower(context.Background(), &pb.NumbersPower{Array: buffer.Bytes(), Size: int32(len(slice)), Power: power})
 	if err != nil {
 		log.Fatalf("could not solve: %v", err)
 	}
-	err = json.Unmarshal(r.Array, &slice)	
+
+	buffer.Reset()
+	buffer.Write(r.Array)
+
+	err = binary.Read(buffer, binary.LittleEndian, &slice)
 	if err != nil {
 		log.Fatalf("could not solve: %v", err)
 	}

@@ -8,7 +8,6 @@ using namespace std;
 
 inline bool IsPrime( int number ) //LostInTheCode, SO
 {
-    // tests the number in the formats 6k-1, 6k and 6k+1 up until it's square root
     if ( ( (!(number & 1)) && number != 2 ) || (number < 2) || (number % 3 == 0 && number != 3) )
         return (false);
     for( int k = 1; 36*k*k-12*k < number;++k)
